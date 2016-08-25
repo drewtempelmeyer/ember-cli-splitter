@@ -1,0 +1,26 @@
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  height: 100%;
+}
+
+.splitter-container {
+  height: 100%;
+  position: relative;
+  width: 100%;
+}
+
+.splitter-pane,
+.splitter-bar {
+  display: inline-block;
+  float: left;
+  height: 100%;
+  overflow: hidden;
+}
+
+.splitter-bar {
+  background: red;
+}
