@@ -59,7 +59,7 @@ export default Component.extend({
    * @property barPosition
    * @type Integer
    */
-   barPosition: undefined,
+  barPosition: undefined,
 
   /**
    * The collection of panes rendered within the container. Panes will be
