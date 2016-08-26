@@ -8,6 +8,23 @@ const {
   isNone
 } = Ember;
 
+/**
+ * Creates a container to wrap panes with a splitter. It is used with both the
+ * `splitter-pane` and `splitter-bar` components to create a resizable split
+ * pane.
+ *
+ * Example:
+ *
+ *   {{#splitter-container as |container|}}
+ *     {{#container.pane}}
+ *       Left pane
+ *     {{/container.pane}}
+ *     {{container.bar}}
+ *     {{#container.pane}}
+ *       Right pane
+ *     {{/container.pane}}
+ *   {{/splitter-container}}
+ */
 export default Component.extend({
   layout,
 
@@ -16,29 +33,16 @@ export default Component.extend({
   classNameBindings: ['isDragging:dragging'],
 
   // Properties
-  _isDragging: false,
-  isDragging: computed('_isDragging', {
-    get() {
-      return this.get('_isDragging');
-    },
 
-    set(key, value) {
-      let $element = this.$();
-      let $window = $(window);
-
-      this.set('_isDragging', value);
-
-      if (value === true) {
-        $element.on('selectstart', this._blockSelection);
-        $window.on('mouseup', this, this._windowMouseUp);
-      } else {
-        $element.off('selectstart', this._blockSelection);
-        $window.off('mouseup', this._windowMouseUp);
-      }
-
-      return value;
-    }
-  }),
+  /**
+   * Determines whether the user is actively resizing the panes
+   *
+   * @private
+   * @property isDragging
+   * @type Boolean
+   * @default false
+   */
+  isDragging: false,
 
   /**
    * Defines the width of the splitter bar
@@ -97,9 +101,15 @@ export default Component.extend({
 
   /**
    * Handles teardown of the element
+   *
+   * @protected
    */
   willDestroyElement() {
     this._super(...arguments);
+
+    // Remove global event listeners
+    this._removeGlobalListeners();
+
     this.set('isDragging', false);
   },
 
@@ -107,13 +117,19 @@ export default Component.extend({
 
   /**
    * Stops dragging on the mouseup event
+   *
+   * @private
    */
   mouseUp() {
     this.set('isDragging', false);
+    // Remove global event listeners
+    this._removeGlobalListeners();
   },
 
   /**
    * Handles resizing of panes when dragging the divider bar
+   *
+   * @private
    */
   mouseMove({ pageX }) {
     // Ignore unless dragging is enabled
@@ -150,6 +166,7 @@ export default Component.extend({
    *
    * This ensures the we handle setting the `isDragging` property to the correct
    * value.
+   *
    * @private
    */
   _windowMouseUp({ data }) {
@@ -157,7 +174,8 @@ export default Component.extend({
   },
 
   /**
-   * Prevent IE9 from selecting text when dragging
+   * Prevent IE9 from selecting text when dragging. Always returns false.
+   *
    * @private
    * @return {Boolean}
    */
@@ -166,10 +184,32 @@ export default Component.extend({
   },
 
   /**
-   * When the bar receives the mouseDown event, we'll need to recalculate the
-   * bar's position and begin dragging
+   * Adds global event listener for mouseup events
    *
    * @private
+   */
+  _addGlobalListeners() {
+    let elementId = this.get('elementId');
+    this.$().on(`selectstart.${elementId}`, this._blockSelection);
+    $(window).on(`mouseup.${elementId}`, this, this._windowMouseUp);
+  },
+
+  /**
+   * Removes global event listener for mouseup events
+   *
+   * @private
+   */
+  _removeGlobalListeners() {
+    let elementId = this.get('elementId');
+    this.$().off(`selectstart.${elementId}`);
+    $(window).off(`mouseup.${elementId}`);
+  },
+
+  /**
+   * When the bar receives the mouseDown event, we'll need to recalculate the
+   * bar's position and begin dragging.
+   *
+   * @protected
    */
   _dragBar($bar) {
     let {
@@ -183,15 +223,20 @@ export default Component.extend({
     }
 
     let barPosition = ($bar.width() / 2) + $bar.offset().left;
+
     this.setProperties({
       barPosition,
       isDragging: true
     });
+
+    // Set up event listeners
+    this._addGlobalListeners();
   },
 
   /**
    * Add pane
-   * @private
+   *
+   * @protected
    */
   _addPane(pane) {
     this.get('panes').addObject(pane);
@@ -199,7 +244,8 @@ export default Component.extend({
 
   /**
    * Remove pane
-   * @private
+   *
+   * @protected
    */
   _removePane(pane) {
     this.get('panes').removeObject(pane);

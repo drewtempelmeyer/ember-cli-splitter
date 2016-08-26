@@ -44,17 +44,24 @@ test('lastPane should be present when two panes exist', function(assert) {
 });
 
 test('it should remove the mouseup event listener on destroy', function(assert) {
-  assert.expect(2);
+  assert.expect(3);
 
   // Creates the component instance
   let component = this.subject();
   // Renders the component to the page
   this.render();
+  component._addPane({ name: 'Left pane' });
+  component._addPane({ name: 'Right pane' });
+
+  let $bar = $('<div class="splitter-bar"/>');
+  this.$().append($bar);
+
   run(() => {
-    component.set('isDragging', true);
+    component._dragBar($bar);
     let events = $._data($(window).get(0), 'events');
     assert.equal(events.mouseup.length, 1, 'has one mouseup event');
     component.destroy();
+    assert.notOk(component.get('isDragging'), 'isDragging is false');
     events = $._data($(window).get(0), 'events');
     assert.equal(events, null, 'no window events');
   });
