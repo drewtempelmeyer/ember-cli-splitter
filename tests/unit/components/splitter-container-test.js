@@ -1,9 +1,7 @@
 import Ember from 'ember';
 import { moduleForComponent, test } from 'ember-qunit';
 
-const {
-  run
-} = Ember;
+const { run } = Ember;
 
 moduleForComponent('splitter-container', 'Unit | Component | splitter container', {
   // Specify the other units that are required for this test
@@ -22,8 +20,6 @@ test('lastPane should be undefined if only one pane exists', function(assert) {
 
   // Creates the component instance
   let component = this.subject();
-  // Renders the component to the page
-  this.render();
   component._addPane(firstPane);
   assert.equal(component.get('lastPane'), undefined, 'lastPane is undefined');
 });
@@ -35,7 +31,6 @@ test('lastPane should be present when two panes exist', function(assert) {
   let lastPane = { name: 'Drizzy Drake' };
 
   let component = this.subject();
-  this.render();
   component._addPane(firstPane);
   component._addPane(lastPane);
 
@@ -43,26 +38,17 @@ test('lastPane should be present when two panes exist', function(assert) {
   assert.equal(component.get('lastPane'), lastPane, 'lastPane matches');
 });
 
-test('it should remove the mouseup event listener on destroy', function(assert) {
-  assert.expect(3);
+test('it should remove the event listeners on willDestroyElement', function(assert) {
+  assert.expect(1);
 
   // Creates the component instance
-  let component = this.subject();
-  // Renders the component to the page
-  this.render();
-  component._addPane({ name: 'Left pane' });
-  component._addPane({ name: 'Right pane' });
-
-  let $bar = $('<div class="splitter-bar"/>');
-  this.$().append($bar);
+  let component = this.subject({
+    _removeGlobalListeners() {
+      assert.ok(true, 'removed global listeners');
+    }
+  });
 
   run(() => {
-    component._dragBar($bar);
-    let events = $._data($(window).get(0), 'events');
-    assert.equal(events.mouseup.length, 1, 'has one mouseup event');
-    component.destroy();
-    assert.notOk(component.get('isDragging'), 'isDragging is false');
-    events = $._data($(window).get(0), 'events');
-    assert.equal(events, null, 'no window events');
+    component.willDestroyElement();
   });
 });

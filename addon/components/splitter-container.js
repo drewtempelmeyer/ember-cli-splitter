@@ -5,7 +5,11 @@ const {
   $,
   Component,
   computed,
-  isNone
+  isNone,
+  get,
+  getProperties,
+  set,
+  setProperties
 } = Ember;
 
 /**
@@ -87,8 +91,8 @@ export default Component.extend({
    * @type Object
    */
   lastPane: computed('panes.{firstObject,lastObject}', function() {
-    let firstPane = this.get('panes.firstObject');
-    let lastPane = this.get('panes.lastObject');
+    let firstPane = get(this, 'panes.firstObject');
+    let lastPane = get(this, 'panes.lastObject');
 
     if (firstPane !== lastPane) {
       return lastPane;
@@ -110,7 +114,7 @@ export default Component.extend({
     // Remove global event listeners
     this._removeGlobalListeners();
 
-    this.set('isDragging', false);
+    set(this, 'isDragging', false);
   },
 
   // Events
@@ -121,8 +125,7 @@ export default Component.extend({
    * @private
    */
   mouseUp() {
-    this.set('isDragging', false);
-    // Remove global event listeners
+    set(this, 'isDragging', false);
     this._removeGlobalListeners();
   },
 
@@ -133,29 +136,29 @@ export default Component.extend({
    */
   mouseMove({ pageX }) {
     // Ignore unless dragging is enabled
-    if (!this.get('isDragging')) {
-      return false;
+    if (!get(this, 'isDragging')) {
+      return;
     }
 
     let {
       firstPane,
       lastPane,
       barPosition
-    } = this.getProperties('firstPane', 'lastPane', 'barPosition');
+    } = getProperties(this, 'firstPane', 'lastPane', 'barPosition');
 
     // Calculate the percentage of the firstPane
     let percent = (pageX - firstPane.$().offset().left) / this.$().width() * 100;
 
     if (pageX < barPosition) {
       // Moving left, decrease size of firstPane
-      firstPane.set('width', percent);
+      set(firstPane, 'width', percent);
       // Account for minWidths
-      lastPane.set('width', 100 - firstPane.get('width'));
+      set(lastPane, 'width', 100 - firstPane.get('width'));
     } else {
       // Moving right, decrease size of lastPane
-      lastPane.set('width', 100 - percent);
+      set(lastPane, 'width', 100 - percent);
       // Account for minWidths
-      firstPane.set('width', 100 - lastPane.get('width'));
+      set(firstPane, 'width', 100 - lastPane.get('width'));
     }
   },
 
@@ -189,7 +192,7 @@ export default Component.extend({
    * @private
    */
   _addGlobalListeners() {
-    let elementId = this.get('elementId');
+    let elementId = get(this, 'elementId');
     this.$().on(`selectstart.${elementId}`, this._blockSelection);
     $(window).on(`mouseup.${elementId}`, this, this._windowMouseUp);
   },
@@ -200,7 +203,7 @@ export default Component.extend({
    * @private
    */
   _removeGlobalListeners() {
-    let elementId = this.get('elementId');
+    let elementId = get(this, 'elementId');
     this.$().off(`selectstart.${elementId}`);
     $(window).off(`mouseup.${elementId}`);
   },
@@ -215,7 +218,7 @@ export default Component.extend({
     let {
       firstPane,
       lastPane
-    } = this.getProperties('firstPane', 'lastPane');
+    } = getProperties(this, 'firstPane', 'lastPane');
 
     // No pane, no gain
     if (isNone(firstPane) || isNone(lastPane)) {
@@ -224,12 +227,7 @@ export default Component.extend({
 
     let barPosition = ($bar.width() / 2) + $bar.offset().left;
 
-    this.setProperties({
-      barPosition,
-      isDragging: true
-    });
-
-    // Set up event listeners
+    setProperties(this, { barPosition, isDragging: true });
     this._addGlobalListeners();
   },
 
@@ -239,7 +237,7 @@ export default Component.extend({
    * @protected
    */
   _addPane(pane) {
-    this.get('panes').addObject(pane);
+    get(this, 'panes').addObject(pane);
   },
 
   /**
@@ -248,6 +246,6 @@ export default Component.extend({
    * @protected
    */
   _removePane(pane) {
-    this.get('panes').removeObject(pane);
+    get(this, 'panes').removeObject(pane);
   }
 });
