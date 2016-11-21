@@ -3,7 +3,10 @@ import Ember from 'ember';
 const {
   Component,
   computed,
-  observer
+  get,
+  getProperties,
+  observer,
+  set
 } = Ember;
 
 const { readOnly } = computed;
@@ -32,14 +35,14 @@ export default Component.extend({
    */
   width: computed('minWidth', {
     get() {
-      return this.get('_width') || 50;
+      return get(this, '_width') || 50;
     },
 
     set(key, value) {
       // Prevent resizing under the allowed minWidth
-      let minWidth = this.get('minWidth');
+      let minWidth = get(this, 'minWidth');
       let width = Math.max(minWidth, value);
-      this.set('_width', width);
+      set(this, '_width', width);
       return width;
     }
   }),
@@ -58,9 +61,10 @@ export default Component.extend({
    * @private
    */
   _updateSize: observer('width', 'barWidth', function() {
-    let barWidth = this.get('barWidth') / 2;
-    let width = this.get('width');
-    this.element.style.width = `calc(${width}% - ${barWidth}px)`;
+    let { barWidth, width } = getProperties(this, 'barWidth', 'width');
+    this.element.style.width = `calc(${width}% - ${barWidth / 2}px)`;
+    // Send resized action
+    this.sendAction('resized', this.$().width());
   }),
 
   // Run Loop
@@ -71,7 +75,7 @@ export default Component.extend({
   didInsertElement() {
     this._super(...arguments);
     this._updateSize();
-    this.get('splitterContainer')._addPane(this);
+    get(this, 'splitterContainer')._addPane(this);
   },
 
   /**
@@ -79,6 +83,6 @@ export default Component.extend({
    */
   willDestroyElement() {
     this._super(...arguments);
-    this.get('splitterContainer')._removePane(this);
+    get(this, 'splitterContainer')._removePane(this);
   }
 });

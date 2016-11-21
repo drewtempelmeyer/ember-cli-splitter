@@ -56,3 +56,27 @@ test('it should resize the right pane when moving left', function(assert) {
 
   assert.ok($rightPane.width() < rightPaneWidth, 'reduced size of right pane');
 });
+
+test('it calls the resized action', function(assert) {
+  assert.expect(4);
+  this.set('resized', (width) => assert.ok(typeof width === 'number'));
+
+  this.render(hbs`
+    {{#splitter-container barWidth=10 as |splitter|}}
+      {{#splitter.pane class="left-pane" resized=resized}}
+        Left pane
+      {{/splitter.pane}}
+      {{splitter.bar class="barbell"}}
+      {{#splitter.pane class="right-pane" resized=resized}}
+        Right pane
+      {{/splitter.pane}}
+    {{/splitter-container}}
+  `);
+
+  let $container = this.$('.splitter-container');
+  let $rightPane = this.$('.right-pane');
+
+  this.$('.barbell').trigger($.Event('mousedown'));
+  $container.trigger($.Event('mousemove', { pageX: $rightPane.offset().left + 50 }));
+  $container.trigger('mouseup');
+});
